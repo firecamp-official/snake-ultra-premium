@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -79,28 +79,6 @@
     transform: scaleY(0);
     transition: transform linear;
   }
-  /* Joystick */
-  #joystick {
-    position: absolute;
-    bottom: 100px;
-    left: 20px;
-    width: 120px;
-    height: 120px;
-    background: rgba(255,255,255,0.1);
-    border: 2px solid #0ff;
-    border-radius: 50%;
-    touch-action: none;
-  }
-  #stick {
-    position: absolute;
-    width: 60px;
-    height: 60px;
-    background: #0ff;
-    border-radius: 50%;
-    top: 30px;
-    left: 30px;
-    touch-action: none;
-  }
   #gameOverPanel {
     position: absolute;
     top: 40%;
@@ -127,7 +105,6 @@
   <div class="powerBtn" id="btnInvis">I<div class="cooldownOverlay"></div></div>
 </div>
 
-<div id="joystick"><div id="stick"></div></div>
 <div id="gameOverPanel">
   <h2>💀 GAME OVER</h2>
   <p id="finalScore"></p>
@@ -147,6 +124,9 @@ let snake, dx, dy, fruit, shields, score, speed, gameOver, shield, invincible, b
 let lasers, monsters, powers;
 let shakeTime = 0;
 
+let direction = "RIGHT";
+let nextDirection = "RIGHT";
+
 // Resize canvas
 function resizeCanvas() {
   canvas.width = window.innerWidth * 0.95;
@@ -159,6 +139,7 @@ window.addEventListener('resize', resizeCanvas);
 function initGame() {
   snake = [{x:10,y:10}];
   dx=1; dy=0;
+  direction="RIGHT"; nextDirection="RIGHT";
   fruit=randomFruit();
   shields=[];
   score=0;
@@ -183,6 +164,35 @@ function initGame() {
   gameLoop();
 }
 
+// === CONTROLES ===
+// Clavier
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowUp" && direction !== "DOWN") nextDirection = "UP";
+  if (e.key === "ArrowDown" && direction !== "UP") nextDirection = "DOWN";
+  if (e.key === "ArrowLeft" && direction !== "RIGHT") nextDirection = "LEFT";
+  if (e.key === "ArrowRight" && direction !== "LEFT") nextDirection = "RIGHT";
+});
+
+// Swipe tactile
+let touchStartX=0, touchStartY=0, touchEndX=0, touchEndY=0;
+document.addEventListener("touchstart", (e) => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+});
+document.addEventListener("touchend", (e) => {
+  touchEndX = e.changedTouches[0].clientX;
+  touchEndY = e.changedTouches[0].clientY;
+  let dxSwipe = touchEndX - touchStartX;
+  let dySwipe = touchEndY - touchStartY;
+  if (Math.abs(dxSwipe) > Math.abs(dySwipe)) {
+    if (dxSwipe > 30 && direction !== "LEFT") nextDirection = "RIGHT";
+    if (dxSwipe < -30 && direction !== "RIGHT") nextDirection = "LEFT";
+  } else {
+    if (dySwipe > 30 && direction !== "UP") nextDirection = "DOWN";
+    if (dySwipe < -30 && direction !== "DOWN") nextDirection = "UP";
+  }
+});
+
 // === GAME LOOP ===
 function gameLoop(){
   if(gameOver){ 
@@ -190,6 +200,13 @@ function gameLoop(){
     gameOverPanel.style.display="block";
     return; 
   }
+
+  direction = nextDirection;
+  if(direction==="UP"){dx=0;dy=-1;}
+  if(direction==="DOWN"){dx=0;dy=1;}
+  if(direction==="LEFT"){dx=-1;dy=0;}
+  if(direction==="RIGHT"){dx=1;dy=0;}
+
   updateLasers();
   updateMonsters();
   update();
@@ -229,7 +246,7 @@ function update(){
   snake.pop();
 }
 
-// === MONSTRES améliorés ===
+// === MONSTRES ===
 function spawnMonster(){
   let x=Math.floor(Math.random()*(canvas.width/grid)),
       y=Math.floor(Math.random()*(canvas.height/grid));
